@@ -16,15 +16,19 @@ import torchvision.models as models
 # https://towardsdatascience.com/review-fcn-semantic-segmentation-eb8c9b50d2d1
 # https://arxiv.org/pdf/1411.4038.pdf
 #
+
+import config
+
+
 class SCNN(nn.Module):
-    def __init__(self, input_size, ms_ks=9, pretrained=True):
+    def __init__(self, ms_ks=9, pretrained=True):
         """
         Argument
             ms_ks: kernel size in message passing conv
         """
         super(SCNN, self).__init__()
         self.pretrained = pretrained
-        self.net_init(input_size, ms_ks)
+        self.net_init(ms_ks)
         if not pretrained:
             self.weight_init()
 
@@ -141,8 +145,8 @@ class SCNN(nn.Module):
             out = out[::-1]
         return torch.cat(out, dim=dim)
 
-    def net_init(self, input_size, ms_ks):
-        input_w, input_h = input_size
+    def net_init(self, ms_ks):
+        input_w, input_h = config.IMAGE_W, config.IMAGE_H
         self.fc_input_feature = 5 * int(input_w / 16) * int(input_h / 16)
         # NOTE: backbone 用的是 vgg16 的特征提取部分, 但删除了 33,43 两层
         # maxpooling, 因为 pooling 会导致的空间信息丢失; 同时替换最后几层 conv2d

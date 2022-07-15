@@ -41,19 +41,21 @@ class Tusimple(Dataset):
         return len(self.img_list)
 
     def __getitem__(self, idx):
-        import ipdb; ipdb.set_trace()
         img = cv2.imread(self.img_list[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = util.normalize(
-            util.to_tensor(util.resize(img, (config.W, config.H))),
+            util.to_tensor(util.resize(img, (config.IMAGE_W, config.IMAGE_H))),
             config.MEAN,
             config.STD,
         )
         # NOTE: imread 返回的是一个 BGR 的图片, 但这里只需要 b,g,r 的某一个来代
         # 表像素所属的分类, 因为 bgr 在 generate_label 时写的是值是相同的
         label = cv2.imread(self.segLabel_list[idx])[:, :, 0]
-        label = util.resize(label, (config.W, config.H))
+        label = util.resize(label, (config.IMAGE_W, config.IMAGE_H))
+        label = torch.from_numpy(label).type(torch.long)
+
         exist = np.array(self.exist_list[idx])
+        exist = torch.from_numpy(exist).type(torch.float32)
 
         sample = {
             "img": img,

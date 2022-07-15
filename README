@@ -1,0 +1,5 @@
+1. run ./inspect_tusimple.py to demo json parsing process
+2. run ./hello_tusimple.py to demo lane detector inference process
+
+ps. download `hello_tusimple.pth` from:
+https://drive.google.com/open?id=1IwEenTekMt-t6Yr5WJU9_kv4d_Pegd_Q

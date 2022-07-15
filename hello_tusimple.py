@@ -47,8 +47,7 @@ with torch.no_grad():
     data = util.normalize(util.to_tensor(img), config.MEAN, config.STD)
     data.unsqueeze_(0)
 
-    seg_pred, exist_pred = net(data)[:2]
-    import ipdb; ipdb.set_trace()
+    seg_pred, exist_pred, _ = net(data)
     seg_pred = F.softmax(seg_pred, dim=1)
     seg_pred = seg_pred.detach().cpu().numpy()
     exist_pred = exist_pred.detach().cpu().numpy()

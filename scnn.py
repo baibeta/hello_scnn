@@ -69,18 +69,14 @@ class SCNN(nn.Module):
         exist_pred = self.fc(x)
         # exist_pred: [1, 4]
 
-        if seg_gt is not None and exist_gt is not None:
+        loss = None
+        if seg_gt is not None:
             # training
             loss_seg = self.ce_loss(seg_pred, seg_gt)
             loss_exist = self.bce_loss(exist_pred, exist_gt)
             loss = loss_seg * self.scale_seg + loss_exist * self.scale_exist
-        else:
-            # inferencing
-            loss_seg = torch.tensor(0, dtype=img.dtype, device=img.device)
-            loss_exist = torch.tensor(0, dtype=img.dtype, device=img.device)
-            loss = torch.tensor(0, dtype=img.dtype, device=img.device)
 
-        return seg_pred, exist_pred, loss_seg, loss_exist, loss
+        return seg_pred, exist_pred, loss
 
     def message_passing_forward(self, x):
         # NOTE: message_passing_forward 是 SCNN 最核心的部分
@@ -94,13 +90,6 @@ class SCNN(nn.Module):
         return x
 
     def message_passing_once(self, x, conv, vertical=True, reverse=False):
-        """
-        Argument:
-        ----------
-        x: input tensor
-        vertical: vertical message passing or horizontal
-        reverse: False for up-down or left-right, True for down-up or right-left
-        """
         nB, C, H, W = x.shape
         # NOTE: down 时的计算步骤:
         # 1. 按 H 方向切成 H 个 (C,1,W) 的 slice

@@ -9,6 +9,7 @@ import time
 
 import numpy as np
 import torch.nn.functional as F
+import onnxruntime as onnx
 
 from scnn_vgg import SCNNVgg
 from scnn_mobilenet import SCNNMobileNet
@@ -20,20 +21,43 @@ fps_counter = []
 fps_counter_N = 5
 
 
-def inference_image(args, net, image):
+class TorchDetector(object):
+    def __init__(self, model):
+        if args.model == "vgg":
+            self.net = SCNNVgg(pretrained=True)
+        if args.model == "mobilenet":
+            self.net = SCNNMobileNet(pretrained=True)
+        save_dict = torch.load(self.net.get_model_name())
+        self.net.load_state_dict(save_dict["net"])
+        self.net.eval()
+
+    def invoke(self, image):
+        seg_pred, exist_pred, _ = self.net(image)
+        seg_pred = seg_pred.detach().cpu().numpy()
+        exist_pred = exist_pred.detach().cpu().numpy()
+        return seg_pred[0], exist_pred
+
+
+class OnnxDetector(object):
+    def __init__(self, model):
+        self.onnx_session = onnx.InferenceSession(model)
+
+    def invoke(self, image):
+        seg_pred, exist_pred = self.onnx_session.run(
+            ["seg_pred", "exist"],
+            {"image": image.numpy()},
+        )
+        return seg_pred[0], exist_pred
+
+
+def inference_image(args, detector, image):
     img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     img = util.resize(img, (config.IMAGE_W, config.IMAGE_H))
     data = util.normalize(util.to_tensor(img), config.MEAN, config.STD)
     data.unsqueeze_(0)
 
-    seg_pred, exist_pred, _ = net(data)
-    seg_pred = F.softmax(seg_pred, dim=1)
-    seg_pred = seg_pred.detach().cpu().numpy()
-    exist_pred = exist_pred.detach().cpu().numpy()
-
-    seg_pred = seg_pred[0]
-    exist = [1 if exist_pred[0, i] > 0.5 else 0 for i in range(4)]
+    seg_pred, exist_pred = detector.invoke(data)
 
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     lane_img = np.zeros_like(img)
@@ -66,15 +90,13 @@ def inference_image(args, net, image):
 
 
 def inference(args):
-    net = None
+    detector = None
     if args.model == "vgg":
-        net = SCNNVgg(pretrained=True)
+        detector = TorchDetector("vgg")
     if args.model == "mobilenet":
-        net = SCNNMobileNet(pretrained=True)
-
-    save_dict = torch.load(net.get_model_name())
-    net.load_state_dict(save_dict["net"])
-    net.eval()
+        detector = TorchDetector("mobilenet")
+    if args.model == "onnx":
+        detector = OnnxDetector("hello_scnn.onnx")
 
     if args.video != None:
         if args.dump:
@@ -89,14 +111,14 @@ def inference(args):
             ok, frame = cap.read()
             if not ok:
                 break
-            img = inference_image(args, net, frame)
+            img = inference_image(args, detector, frame)
             if args.dump:
                 out.write(img)
             if args.visualize:
                 cv2.imshow("", img)
     else:
         image = cv2.imread(args.image)
-        img = inference_image(args, net, image)
+        img = inference_image(args, detector, image)
         if args.dump:
             cv2.imwrite(f"dump.jpg", img)
         if args.visualize:
@@ -114,7 +136,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dump", action="store_true")
     parser.add_argument("--visualize", action="store_true")
-    parser.add_argument("--model", choices=["vgg", "mobilenet"], default="mobilenet")
+    parser.add_argument(
+        "--model", choices=["vgg", "mobilenet", "onnx"], default="mobilenet"
+    )
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--image", type=str)
     source.add_argument("--video", type=str)

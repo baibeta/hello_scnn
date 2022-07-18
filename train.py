@@ -8,20 +8,26 @@ import argparse
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from dataset import Tusimple
-from scnn import SCNN
-
+from scnn_vgg import SCNNVgg
+from scnn_mobilenet import SCNNMobileNet
 
 device = torch.device("cuda:0")
 
 
-def evaluate():
+def evaluate(args):
+    print("evaluating")
     test_dataset = Tusimple("test")
     test_loader = DataLoader(test_dataset, batch_size=32, shuffle=True)
 
-    net = SCNN(pretrained=True)
+    net = None
+    if args.model == "vgg":
+        net = SCNNVgg(pretrained=True)
+    if args.model == "mobilenet":
+        net = SCNNMobileNet(pretrained=True)
+
     net = net.to(device)
     net.eval()
-    save_dict = torch.load("hello_scnn.pth")
+    save_dict = torch.load(net.get_model_name())
     net.load_state_dict(save_dict["net"])
 
     progress = tqdm(range(len(test_loader)))
@@ -41,7 +47,12 @@ def train(args):
     train_dataset = Tusimple("train")
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
-    net = SCNN(pretrained=True)
+    net = None
+    if args.model == "vgg":
+        net = SCNNVgg(pretrained=True)
+    if args.model == "mobilenet":
+        net = SCNNMobileNet(pretrained=True)
+
     net = net.to(device)
     net.train()
     optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=1e-4)
@@ -55,7 +66,7 @@ def train(args):
     best_loss = 65535
     if not args.reset:
         try:
-            save_dict = torch.load("hello_scnn.pth")
+            save_dict = torch.load(net.get_model_name())
             net.load_state_dict(save_dict["net"])
             optimizer.load_state_dict(save_dict["optimizer"])
             lr_scheduler.load_state_dict(save_dict["lr_scheduler"])
@@ -64,6 +75,7 @@ def train(args):
         except:
             pass
 
+    print("training")
     for i in range(args.epoch):
         print(f"epoch: {i}")
         progress = tqdm(range(len(train_loader)))
@@ -90,7 +102,7 @@ def train(args):
                         "lr_scheduler": lr_scheduler.state_dict(),
                         "best_loss": best_loss,
                     },
-                    "hello_scnn.pth",
+                    net.get_model_name(),
                 )
 
 
@@ -115,7 +127,8 @@ if __name__ == "__main__":
         "--reset",
         action="store_true",
     )
+    parser.add_argument("--model", choices=["vgg", "mobilenet"], default="mobilenet")
     args = parser.parse_args()
 
     train(args)
-    evaluate()
+    evaluate(args)

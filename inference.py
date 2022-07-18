@@ -4,22 +4,24 @@
 import cv2
 import torch
 import torchvision
+import argparse
+import time
 
 import numpy as np
 import torch.nn.functional as F
 
-from scnn import SCNN
+from scnn_vgg import SCNNVgg
+from scnn_mobilenet import SCNNMobileNet
+
 import util
 import config
 
-net = SCNN(pretrained=False)
-save_dict = torch.load("hello_scnn.pth")
-net.load_state_dict(save_dict["net"])
-net.eval()
+fps_counter = []
+fps_counter_N = 5
 
-with torch.no_grad():
-    img = cv2.imread("hello_tusimple.jpg")
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+def inference_image(args, net, image):
+    img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     img = util.resize(img, (config.IMAGE_W, config.IMAGE_H))
     data = util.normalize(util.to_tensor(img), config.MEAN, config.STD)
@@ -45,11 +47,76 @@ with torch.no_grad():
         lane_img[coord_mask == (i + 1)] = color[i]
 
     img = cv2.addWeighted(src1=lane_img, alpha=0.5, src2=img, beta=1.0, gamma=0.0)
-    cv2.imwrite("test.jpg", img)
-    cv2.imshow("", img)
+    fps_counter.append(int(time.time() * 1000))
+    if len(fps_counter) >= fps_counter_N:
+        fps = fps_counter_N * 1000 // (fps_counter[-1] - fps_counter[0])
+        fps_counter.pop(0)
+        cv2.putText(
+            img,
+            f"FPS:{fps}",
+            (10, 20),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (255, 0, 0),
+            1,
+            cv2.LINE_AA,
+        )
 
-    while True:
-        k = cv2.waitKey(0) & 0xFF
-        if k == ord("q"):
-            cv2.destroyAllWindows()
-            break
+    return img
+
+
+def inference(args):
+    net = None
+    if args.model == "vgg":
+        net = SCNNVgg(pretrained=True)
+    if args.model == "mobilenet":
+        net = SCNNMobileNet(pretrained=True)
+
+    save_dict = torch.load(net.get_model_name())
+    net.load_state_dict(save_dict["net"])
+    net.eval()
+
+    if args.video != None:
+        if args.dump:
+            out = cv2.VideoWriter(
+                "dump.avi",
+                cv2.VideoWriter_fourcc("M", "J", "P", "G"),
+                10,
+                (config.IMAGE_W, config.IMAGE_H),
+            )
+        cap = cv2.VideoCapture(args.video)
+        while True:
+            ok, frame = cap.read()
+            if not ok:
+                break
+            img = inference_image(args, net, frame)
+            if args.dump:
+                out.write(img)
+            if args.visualize:
+                cv2.imshow("", img)
+    else:
+        image = cv2.imread(args.image)
+        img = inference_image(args, net, image)
+        if args.dump:
+            cv2.imwrite(f"dump.jpg", img)
+        if args.visualize:
+            cv2.imshow("", img)
+
+    if args.visualize:
+        while True:
+            k = cv2.waitKey(0) & 0xFF
+            if k == ord("q"):
+                cv2.destroyAllWindows()
+                break
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dump", action="store_true")
+    parser.add_argument("--visualize", action="store_true")
+    parser.add_argument("--model", choices=["vgg", "mobilenet"], default="mobilenet")
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--image", type=str)
+    source.add_argument("--video", type=str)
+    args = parser.parse_args()
+    inference(args)

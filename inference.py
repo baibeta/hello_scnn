@@ -13,7 +13,7 @@ import util
 import config
 
 net = SCNN(pretrained=False)
-save_dict = torch.load("test.pth")
+save_dict = torch.load("hello_scnn.pth")
 net.load_state_dict(save_dict["net"])
 net.eval()
 

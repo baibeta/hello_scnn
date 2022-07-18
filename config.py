@@ -11,3 +11,7 @@ ORIG_IMAGE_W = 1280
 SEG_WIDTH = 30
 
 DATA_PATH = "/data/datasets/tusimple"
+
+EPOCH = 5
+BATCH = 32
+LR = 1e-3

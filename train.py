@@ -11,10 +11,10 @@ from scnn import SCNN
 from util import PolyLR
 
 device = torch.device("cuda:0")
-train_dataset = Tusimple(config.DATA_PATH, "train")
+train_dataset = Tusimple("train")
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
-test_dataset = Tusimple(config.DATA_PATH, "test")
+test_dataset = Tusimple("test")
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=True)
 
 net = SCNN(pretrained=True)

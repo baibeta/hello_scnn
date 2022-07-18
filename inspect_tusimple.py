@@ -3,12 +3,7 @@
 # 2021-12-30 13:14
 import json
 import cv2
-#
-# NOTE: code from https://github.com/eeyrw/LaneDatasetInspector
-#
-# NOTE: 关于标签数据的格式
-#
-# hello_tusimple.json 记录了每条车道线上多个采样点的坐标.
+
 meta_data = json.loads(open("hello_tusimple.json").readline())
 
 image_name = meta_data["raw_file"]

@@ -25,7 +25,7 @@ class Tusimple(Dataset):
             self.label_data = pickle.load(f)
 
     def __len__(self):
-        return len(self.label)
+        return len(self.label_data)
 
     def __getitem__(self, idx):
         label_data = self.label_data[idx]
@@ -40,9 +40,6 @@ class Tusimple(Dataset):
             config.MEAN,
             config.STD,
         )
-        # NOTE: imread 返回的是一个 BGR 的图片, 但这里只需要 b,g,r 的某一个来代
-        # 表像素所属的分类, 因为 bgr 在 generate_label 时写的是值是相同的
-        import ipdb; ipdb.set_trace()
         label = cv2.imread(label_file)
         label = label[:, :, 0]
         label = util.resize(label, (config.IMAGE_W, config.IMAGE_H))

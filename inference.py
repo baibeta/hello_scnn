@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # 2021-12-30 15:06
-#
-# NOTE: code from https://github.com/harryhan618/SCNN_Pytorch
-#
 import cv2
 import torch
 import torchvision
@@ -19,25 +16,6 @@ net = SCNN(pretrained=False)
 save_dict = torch.load("test.pth")
 net.load_state_dict(save_dict["net"])
 net.eval()
-
-# NOTE: 关于 scnn 的输出
-#
-# scnn 的输出有两个: seg_pred 和 exist_pred
-#
-# seg_pred: [5, 288, 800], 表示每一个像素所属 class 的概率.
-#
-# 0 表示属于 backgroud 的概率, 即这个像素不属于任何一条车道线.
-# 1 表示属于车道线 0 的概率
-# ...
-# 4 表示属于车道线 3 的概率, 一共有 4 条车道线
-#
-# exist_pred: [1, 4], 表示检测到有相应车道的概率
-#
-# seg_pred 这种针对所有像素的分类概率叫做 prob_map. lane detection 本质上是一个
-# 语义分割的问题
-#
-# 有了 prob_map 后, 那些 argmax(prob_map,axis=0) == 1 的点就是预测出来的车道线 0
-# 上的点
 
 with torch.no_grad():
     img = cv2.imread("hello_tusimple.jpg")

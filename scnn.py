@@ -21,14 +21,12 @@ import config
 
 
 class SCNN(nn.Module):
-    def __init__(self, ms_ks=9, pretrained=True):
-        """
-        Argument
-            ms_ks: kernel size in message passing conv
-        """
+    # NOTE: K 是 message_passing 的 kernel 的大小, 必须为奇数, 才能保证 conv 后
+    # 尺寸不变
+    def __init__(self, K=9, pretrained=True):
         super(SCNN, self).__init__()
         self.pretrained = pretrained
-        self.net_init(ms_ks)
+        self.net_init(K)
 
         self.scale_background = 0.4
         self.scale_seg = 1.0

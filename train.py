@@ -59,7 +59,7 @@ def train(args):
 
     lr_scheduler = optim.lr_scheduler.OneCycleLR(
         optimizer,
-        max_lr=2e-1,
+        max_lr=config.MAX_LR,
         total_steps=args.epoch * len(train_loader),
     )
 

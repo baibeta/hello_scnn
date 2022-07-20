@@ -12,7 +12,7 @@ class SCNNMobileNet(SCNN):
     def get_model_name(self):
         return "hello_scnn_mobilenet.pth"
 
-    def net_init(self, ms_ks):
+    def net_init(self, K):
         input_w, input_h = config.IMAGE_W, config.IMAGE_H
         self.fc_input_feature = 5 * int(input_w / 16) * int(input_h / 16)
         self.backbone = models.mobilenet_v2(pretrained=self.pretrained).features[:7]
@@ -30,19 +30,19 @@ class SCNNMobileNet(SCNN):
         self.message_passing = nn.ModuleList()
         self.message_passing.add_module(
             "up_down",
-            nn.Conv2d(8, 8, (1, ms_ks), padding=(0, ms_ks // 2), bias=False),
+            nn.Conv2d(8, 8, (1, K), padding=(0, K // 2), bias=False),
         )
         self.message_passing.add_module(
             "down_up",
-            nn.Conv2d(8, 8, (1, ms_ks), padding=(0, ms_ks // 2), bias=False),
+            nn.Conv2d(8, 8, (1, K), padding=(0, K // 2), bias=False),
         )
         self.message_passing.add_module(
             "left_right",
-            nn.Conv2d(8, 8, (ms_ks, 1), padding=(ms_ks // 2, 0), bias=False),
+            nn.Conv2d(8, 8, (K, 1), padding=(K // 2, 0), bias=False),
         )
         self.message_passing.add_module(
             "right_left",
-            nn.Conv2d(8, 8, (ms_ks, 1), padding=(ms_ks // 2, 0), bias=False),
+            nn.Conv2d(8, 8, (K, 1), padding=(K // 2, 0), bias=False),
         )
         # (nB, 128, 36, 100)
 

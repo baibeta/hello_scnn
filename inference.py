@@ -6,6 +6,7 @@ import torch
 import torchvision
 import argparse
 import time
+from tqdm import tqdm
 
 import numpy as np
 import torch.nn.functional as F
@@ -110,13 +111,17 @@ def inference(args):
                 (config.IMAGE_W, config.IMAGE_H),
             )
         cap = cv2.VideoCapture(args.video)
+        length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        pbar = tqdm(range(length))
         while True:
             ok, frame = cap.read()
             if not ok:
                 break
             img = inference_image(args, detector, frame)
             if args.output == "dump":
+                pbar.update(1)
                 out.write(img)
+        pbar.close()
         if args.output == "dump":
             print("video dumped to dump.mp4")
     else:

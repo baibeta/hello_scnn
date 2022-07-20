@@ -9,8 +9,7 @@ import numpy as np
 import uuid
 import pickle
 import shutil
-from collections import namedtuple
-
+from tqdm import tqdm
 
 def generate_label(flist, mode):
     output = []
@@ -19,7 +18,8 @@ def generate_label(flist, mode):
 
         with open(x) as f:
             print(x)
-            for line in f:
+            lines = f.readlines()
+            for line in tqdm(lines):
                 label = json.loads(line)
                 y_points = label["h_samples"]
                 left_lanes = []

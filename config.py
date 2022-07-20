@@ -8,11 +8,13 @@ STD = (0.229, 0.224, 0.225)
 
 ORIG_IMAGE_H = 720
 ORIG_IMAGE_W = 1280
-SEG_WIDTH = 10
+SEG_WIDTH = 30
 
 DATA_PATH = "/data/datasets/tusimple"
+
+MIN_PROB = 6
 
 EPOCH = 5
 BATCH = 32
 LR = 1e-3
-MAX_LR = 5e-1
+MAX_LR = 3e-1

@@ -67,9 +67,38 @@ def inference_image(args, detector, image):
         [[255, 125, 0], [0, 255, 0], [0, 0, 255], [0, 255, 255]], dtype="uint8"
     )
     coord_mask = np.argmax(seg_pred, axis=0)
-    for i in range(0, 4):
-        # if exist_pred[0, i] > 0.5:
-        lane_img[coord_mask == (i + 1)] = color[i]
+    prob = np.max(seg_pred, axis=0)
+
+    if args.vis == "raw":
+        for i in range(1, 5):
+            x, y = np.where(np.logical_and(coord_mask == i, prob > config.MIN_PROB))
+            lane_img[(x, y)] = color[i - 1]
+
+    if args.vis == "line":
+        for i in range(1, 5):
+            x, y = np.where(np.logical_and(coord_mask == i, prob > config.MIN_PROB))
+            if len(x) <= 10:
+                continue
+            p = np.polyfit(x, y, deg=2)
+            y = np.poly1d(p)(x).astype(np.int)
+            y = np.minimum(y, config.IMAGE_W - 1)
+            lane_img[(x, y)] = color[i - 1]
+
+    if args.vis == "fill":
+        left_y, left_x = np.where(np.logical_and(coord_mask == 2, prob > config.MIN_PROB))
+        # left_y, left_x = np.where(coord_mask == 2)
+        right_y, right_x = np.where(np.logical_and(coord_mask == 3, prob > config.MIN_PROB))
+        # right_y, right_x = np.where(coord_mask == 3)
+        if len(left_x) >= 50 and len(right_x) >= 50:
+            left_poly = np.polyfit(left_x, left_y, deg=3)
+            right_poly = np.polyfit(right_x, right_y, deg=3)
+            left_y = np.poly1d(left_poly)(left_x).astype(np.int32)
+            right_y = np.poly1d(right_poly)(right_x).astype(np.int32)
+
+            left_points = np.array([[[xi, yi]] for xi, yi in zip(left_x, left_y)])
+            right_points = np.array([[[xi, yi]] for xi, yi in zip(right_x, right_y)])
+            points = np.concatenate((left_points, np.flip(right_points, 0)))
+            cv2.fillPoly(lane_img, [points], color=[0, 255, 0])
 
     img = cv2.addWeighted(src1=lane_img, alpha=0.5, src2=img, beta=1.0, gamma=0.0)
     fps_counter.append(int(time.time() * 1000))
@@ -145,6 +174,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model", choices=["vgg", "mobilenet", "onnx"], default="mobilenet"
     )
+    parser.add_argument("--vis", choices=["raw", "line", "fill"], default="fill")
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--image", type=str)
     source.add_argument("--video", type=str)

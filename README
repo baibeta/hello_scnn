@@ -1,5 +1,10 @@
-1. run ./inspect_tusimple.py to demo json parsing process
-2. run ./hello_tusimple.py to demo lane detector inference process
+# generate label
+1. set config.DATA_PATH 
+2. ./generate_label.py
 
-ps. download `hello_tusimple.pth` from:
-https://drive.google.com/open?id=1IwEenTekMt-t6Yr5WJU9_kv4d_Pegd_Q
+# train
+./train.py --reset
+
+# inference
+./inference.py --image hello_tusimple.jpg --output vis 
+

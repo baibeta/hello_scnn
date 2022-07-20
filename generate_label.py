@@ -11,6 +11,7 @@ import pickle
 import shutil
 from tqdm import tqdm
 
+
 def generate_label(flist, mode):
     output = []
     for x in flist:
@@ -79,19 +80,19 @@ def generate_label(flist, mode):
                     label_image_dir, f"{str(uuid.uuid1())}.png"
                 )
                 cv2.imwrite(
-                    os.path.join(config.DATA_PATH, label_image_file),
+                    label_image_file,
                     label_image,
                 )
                 output.append((image, label_image_file, exist))
 
-    with open(os.path.join(config.DATA_PATH, "label", f"{mode}.dat"), "wb") as f:
+    with open(os.path.join("label", f"{mode}.dat"), "wb") as f:
         pickle.dump(output, f)
 
 
 if __name__ == "__main__":
     label_image_dir = os.path.join("label", "clips")
-    shutil.rmtree(os.path.join(config.DATA_PATH, label_image_dir), ignore_errors=True)
-    os.makedirs(os.path.join(config.DATA_PATH, label_image_dir), exist_ok=True)
+    shutil.rmtree(label_image_dir, ignore_errors=True)
+    os.makedirs(label_image_dir, exist_ok=True)
 
     generate_label(
         ("label_data_0313.json", "label_data_0531.json", "label_data_0601.json"),

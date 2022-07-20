@@ -1,10 +1,13 @@
+NOTE: credit to https://github.com/harryhan618/SCNN\_Pytorch
+
 # generate label
-1. set config.DATA_PATH 
-2. ./generate_label.py
+
+./generate\_label.py
 
 # train
-./train.py --reset
+
+./train.py –reset
 
 # inference
-./inference.py --image hello_tusimple.jpg --output vis 
 
+./inference.py –image hello\_tusimple.jpg –output vis

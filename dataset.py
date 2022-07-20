@@ -20,7 +20,7 @@ class Tusimple(Dataset):
         self.loadData()
 
     def loadData(self):
-        label_file = os.path.join(config.DATA_PATH, "label", "{}.dat".format(self.mode))
+        label_file = os.path.join("label", "{}.dat".format(self.mode))
         with open(label_file, "rb") as f:
             self.label_data = pickle.load(f)
 
@@ -30,7 +30,7 @@ class Tusimple(Dataset):
     def __getitem__(self, idx):
         label_data = self.label_data[idx]
         image_file = os.path.join(config.DATA_PATH, label_data[0])
-        label_file = os.path.join(config.DATA_PATH, label_data[1])
+        label_file = label_data[1]
         exist = label_data[2]
 
         img = cv2.imread(image_file)

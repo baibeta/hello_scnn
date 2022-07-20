@@ -85,11 +85,14 @@ def inference_image(args, detector, image):
             1,
             cv2.LINE_AA,
         )
-
+    if args.output == "vis":
+        cv2.imshow("", img)
+        cv2.waitKey(1)
     return img
 
 
 def inference(args):
+    print(f"using {args.model}")
     detector = None
     if args.model == "vgg":
         detector = TorchDetector("vgg")
@@ -99,10 +102,10 @@ def inference(args):
         detector = OnnxDetector("hello_scnn.onnx")
 
     if args.video != None:
-        if args.dump:
+        if args.output == "dump":
             out = cv2.VideoWriter(
-                "dump.avi",
-                cv2.VideoWriter_fourcc("M", "J", "P", "G"),
+                "dump.mp4",
+                cv2.VideoWriter_fourcc("m", "p", "4", "v"),
                 10,
                 (config.IMAGE_W, config.IMAGE_H),
             )
@@ -112,19 +115,18 @@ def inference(args):
             if not ok:
                 break
             img = inference_image(args, detector, frame)
-            if args.dump:
+            if args.output == "dump":
                 out.write(img)
-            if args.visualize:
-                cv2.imshow("", img)
+        if args.output == "dump":
+            print("video dumped to dump.mp4")
     else:
         image = cv2.imread(args.image)
         img = inference_image(args, detector, image)
-        if args.dump:
+        if args.output == "dump":
             cv2.imwrite(f"dump.jpg", img)
-        if args.visualize:
-            cv2.imshow("", img)
+            print("image dumped to dump.jpg")
 
-    if args.visualize:
+    if args.output == "vis":
         while True:
             k = cv2.waitKey(0) & 0xFF
             if k == ord("q"):
@@ -134,8 +136,7 @@ def inference(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dump", action="store_true")
-    parser.add_argument("--visualize", action="store_true")
+    parser.add_argument("--output", choices=["dump", "vis"], required=True)
     parser.add_argument(
         "--model", choices=["vgg", "mobilenet", "onnx"], default="mobilenet"
     )

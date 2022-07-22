@@ -1,4 +1,4 @@
-NOTE: credit to https://github.com/harryhan618/SCNN\_Pytorch
+credit to https://github.com/harryhan618/SCNN_Pytorch
 
 # generate label
 

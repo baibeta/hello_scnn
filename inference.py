@@ -51,6 +51,16 @@ class OnnxDetector(object):
         return seg_pred[0], exist_pred
 
 
+class KerasDetector(object):
+    def __init__(self, model):
+        import tensorflow as tf
+        self.keras_model = tf.keras.models.load_model(model)
+
+    def invoke(self, image):
+        seg_pred, exist_pred = self.keras_model.predict(image.numpy())
+        return seg_pred[0], exist_pred
+
+
 def inference_image(args, detector, image):
     img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
@@ -130,6 +140,8 @@ def inference(args):
         detector = TorchDetector("mobilenet")
     if args.model == "onnx":
         detector = OnnxDetector("hello_scnn.onnx")
+    if args.model == "keras":
+        detector = KerasDetector("hello_scnn.h5")
 
     if args.video != None:
         if args.output == "dump":
@@ -157,7 +169,7 @@ def inference(args):
         image = cv2.imread(args.image)
         img = inference_image(args, detector, image)
         if args.output == "dump":
-            cv2.imwrite(f"dump.jpg", img)
+            cv2.imwrite(f"dump_{args.model}.jpg", img)
             print("image dumped to dump.jpg")
 
     if args.output == "vis":
@@ -172,7 +184,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", choices=["dump", "vis"], required=True)
     parser.add_argument(
-        "--model", choices=["vgg", "mobilenet", "onnx"], default="mobilenet"
+        "--model", choices=["vgg", "mobilenet", "onnx", "keras"], default="mobilenet"
     )
     parser.add_argument("--vis", choices=["raw", "line", "fill"], default="fill")
     source = parser.add_mutually_exclusive_group(required=True)
